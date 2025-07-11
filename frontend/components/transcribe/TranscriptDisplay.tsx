@@ -7,14 +7,15 @@ import { downloadTranscript } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 interface TranscriptDisplayProps {
-  transcript: {
+  transcript?: {
     shipper: string[];
     customer: string[];
   } | null;
+  singleLine?: string; 
   isLoading?: boolean;
 }
 
-export default function TranscriptDisplay({ transcript, isLoading = false }: TranscriptDisplayProps) {
+export default function TranscriptDisplay({ transcript, singleLine, isLoading = false }: TranscriptDisplayProps) {
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -22,20 +23,22 @@ export default function TranscriptDisplay({ transcript, isLoading = false }: Tra
     if (containerRef.current && !isLoading) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
-  }, [transcript, isLoading]);
+  }, [transcript, singleLine, isLoading]);
 
   const handleCopy = () => {
-    if (!transcript) return;
-    
     let copyText = '';
-    
-    transcript.shipper.forEach((line) => {
-      copyText += `Shipper: ${line}\n`;
-    });
-    
-    transcript.customer.forEach((line) => {
-      copyText += `Customer: ${line}\n`;
-    });
+
+    if (transcript) {
+      transcript.shipper.forEach((line) => {
+        copyText += `Shipper: ${line}\n`;
+      });
+      
+      transcript.customer.forEach((line) => {
+        copyText += `Customer: ${line}\n`;
+      });
+    } else if (singleLine) {
+      copyText = singleLine;
+    }
     
     navigator.clipboard.writeText(copyText);
     toast({
@@ -69,7 +72,7 @@ export default function TranscriptDisplay({ transcript, isLoading = false }: Tra
     );
   }
 
-  if (!transcript) {
+  if (!transcript && !singleLine) {
     return (
       <div className="border rounded-md p-6 bg-white">
         <div className="flex justify-between items-center mb-4">
@@ -104,10 +107,9 @@ export default function TranscriptDisplay({ transcript, isLoading = false }: Tra
       >
         <div className="space-y-6">
           <pre className="whitespace-pre-wrap">
-            {`{`}
-            {transcript.shipper.length > 0 && (
+            {transcript && transcript.shipper.length > 0 && (
               <div className="ml-4 mt-2">
-                <span className="text-red-500 font-medium">"Shipper"</span>: 
+                <span className="text-red-500 font-medium">Shipper</span>: 
                 {transcript.shipper.map((text, index) => (
                   <div key={index} className="ml-4">
                     "{text}"{index < transcript.shipper.length - 1 ? "," : ""}
@@ -116,9 +118,9 @@ export default function TranscriptDisplay({ transcript, isLoading = false }: Tra
               </div>
             )}
             
-            {transcript.customer.length > 0 && (
+            {transcript && transcript.customer.length > 0 && (
               <div className="ml-4 mt-2">
-                <span className="text-blue-500 font-medium">"Khách hàng"</span>: 
+                <span className="text-blue-500 font-medium">Khách hàng</span>: 
                 {transcript.customer.map((text, index) => (
                   <div key={index} className="ml-4">
                     "{text}"{index < transcript.customer.length - 1 ? "," : ""}
@@ -126,7 +128,17 @@ export default function TranscriptDisplay({ transcript, isLoading = false }: Tra
                 ))}
               </div>
             )}
-            {`}`}
+
+            {singleLine && (
+              <div className="ml-4 mt-2">
+                <span className="text-blue-500 font-medium">Transcription</span>: 
+                {singleLine.split('\n').map((line, index) => (
+                  <div key={index} className="ml-4">
+                    "{line}"{index < singleLine.split('\n').length - 1 ? "," : ""}
+                  </div>
+                ))}
+              </div>
+            )}
           </pre>
         </div>
       </div>

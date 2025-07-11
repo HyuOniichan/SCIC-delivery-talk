@@ -12,6 +12,7 @@ export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState<{shipper: string[], customer: string[]} | null>(null);
+  const [line, setLine] = useState<string>("");
   const { toast } = useToast();
 
   const handleFileSelect = (file: File) => {
@@ -51,20 +52,25 @@ export default function Home() {
       }
       
       const data = await response.json();
-      setTranscript(data);
+      if (data.text) {
+        console.log('Transcription result:', data);
+        setLine(data.text);
+      } else {
+        setTranscript(data);
+      }
 
       // Save to storage
-      await fetch('/api/storage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: selectedFile.name,
-          content: data,
-          size: `${Math.round(selectedFile.size / 1024 / 1024)}MB`,
-        }),
-      });
+      // await fetch('/api/storage', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     title: selectedFile.name,
+      //     content: data,
+      //     size: `${Math.round(selectedFile.size / 1024 / 1024)}MB`,
+      //   }),
+      // });
 
       toast({
         title: "Transcription complete",
@@ -116,6 +122,7 @@ export default function Home() {
         
         <TranscriptDisplay 
           transcript={transcript} 
+          singleLine={line}
           isLoading={isTranscribing} 
         />
       </div>
